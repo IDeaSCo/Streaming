@@ -1,0 +1,38 @@
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+
+defaultTasks 'clean', 'build'
+
+sourceCompatibility = '1.6'
+targetCompatibility = '1.6'
+
+project.ext {
+
+    //libs
+    groovy = 'org.codehaus.groovy:groovy-all:2.0.5'
+    commonsCli = 'commons-cli:commons-cli:1.1'
+    log4j = 'log4j:log4j:1.2.17'
+    unmanagedLibDir = "$projectDir/lib"
+
+    //test-libs
+    junit = 'junit:junit:4.8.1'
+    hamcrest = 'org.hamcrest:hamcrest-all:1.3'
+    spock = 'org.spockframework:spock-core:0.7-groovy-2.0'
+
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'http://code.google.com/p/google-maven-repository'
+    }
+}
+
+
+dependencies {
+    compile(project.ext.groovy, project.ext.commonsCli, project.ext.log4j)
+    compile fileTree (dir: "${project.ext.unmanagedLibDir}", includes: ['*.jar'])
+    testCompile(project.ext.hamcrest, project.ext.junit, project.ext.spock)
+}
