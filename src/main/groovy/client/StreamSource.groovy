@@ -1,6 +1,7 @@
 package client
 
 import org.java_websocket.client.WebSocketClient
+import org.java_websocket.drafts.Draft_10
 import org.java_websocket.handshake.ServerHandshake
 
 class StreamSource extends WebSocketClient {
@@ -16,7 +17,7 @@ class StreamSource extends WebSocketClient {
 
     @Override
     void onMessage(String message) {
-
+        println("Received Message: $message")
     }
 
     @Override

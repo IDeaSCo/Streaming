@@ -6,13 +6,21 @@ class DataFetcher {
     private final Sql sql
     private final String pmsData = 'Select * from [000028].sampleData'
 
-    DataFetcher(dbConfig) {
-        sql = Sql.newInstance(dbConfig.url, dbConfig.user, dbConfig.password, dbConfig.driver)
+    DataFetcher(dbConfig = [:]) {
+        if(dbConfig) {
+            sql = Sql.newInstance(dbConfig.url, dbConfig.user, dbConfig.password, dbConfig.driver)
+        }
     }
 
     def forEachRowFetch(Closure closure) {
-        sql.eachRow(pmsData) { pmsDataRow ->
-            closure(pmsDataRow)
+        if(sql) {
+            sql.eachRow(pmsData) { pmsDataRow ->
+                closure(pmsDataRow)
+            }
+        } else {
+            10.times {
+                closure("Hello for $it times...")
+            }
         }
     }
 }

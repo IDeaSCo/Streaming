@@ -1,5 +1,8 @@
 import client.DataFetcher
 import client.StreamSource
+import org.java_websocket.WebSocketImpl
+
+import java.nio.channels.NotYetConnectedException
 
 def cli = new CliBuilder(usage:'client -u <url>')
 cli.with {
@@ -27,24 +30,26 @@ def uri = new URL(url).toURI()
 
 //todo: make cmd args for dbConfig later...
 def dbConfig = [url:'jdbc:sqlserver://localhost:1433', user:'sa', password:'', driver:'com.microsoft.sqlserver.jdbc.SQLServerDriver']
-//def dataFetcher = new DataFetcher(dbConfig)
+//if you pass dbConfig in DataFetcher, it will start talking to database
+//and if you don't then it will not connect to DB and instead just send
+//10 messages...purely for debug purposes (to avoid connection to DB)
+def dataFetcher = new DataFetcher()
 def source = new StreamSource(uri)
-
-    println ('Connecting to Server...')
-    source.connect()
-    println('Connected')
-    sleep(10000)
-    try {
-        source.send('hello')
-        println('Message has been delivered to Sink..')
-    }catch (java.nio.channels.NotYetConnectedException nye){
-        println(nye.message)
-    } finally {
-        println ('Closing Connection with Server...')
-        source.close()
+println ('Connecting to Server...')
+source.connect()
+println('Connected')
+try {
+    //Giving the thread in connect() some time to start...problem solved for now!
+    Thread.sleep(1000)
+    println ('Connected')
+    dataFetcher.forEachRowFetch { row ->
+        println "Sending message...$row"
+        source.send(row.toString())
     }
-
- //dataFetcher.forEachRowFetch { row ->
-//    source.send(row.toString())
-//}
-
+    println('Message has been delivered to Sink..')
+} catch (NotYetConnectedException nye){
+    println(nye.message)
+} finally {
+    println ('Closing Connection with Server...')
+    source.close()
+}
