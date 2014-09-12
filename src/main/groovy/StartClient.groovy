@@ -29,20 +29,22 @@ def uri = new URL(url).toURI()
 def dbConfig = [url:'jdbc:sqlserver://localhost:1433', user:'sa', password:'', driver:'com.microsoft.sqlserver.jdbc.SQLServerDriver']
 //def dataFetcher = new DataFetcher(dbConfig)
 def source = new StreamSource(uri)
-try {
+
     println ('Connecting to Server...')
     source.connect()
-    println ('Connected')
-    source.send('hello from source...')
-//dataFetcher.forEachRowFetch { row ->
+    println('Connected')
+    sleep(10000)
+    try {
+        source.send('hello')
+        println('Message has been delivered to Sink..')
+    }catch (java.nio.channels.NotYetConnectedException nye){
+        println(nye.message)
+    } finally {
+        println ('Closing Connection with Server...')
+        source.close()
+    }
+
+ //dataFetcher.forEachRowFetch { row ->
 //    source.send(row.toString())
 //}
-
-} catch (Throwable t) {
-    println("Problem while Connecting...$t.message")
-    t.printStackTrace()
-} finally {
-    println ('Closing Connection with Server...')
-    source.close()
-}
 

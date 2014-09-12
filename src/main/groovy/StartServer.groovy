@@ -26,7 +26,7 @@ if(options.h) {
     host = options.h
 }
 
-def port = 8080
+def port = 9080
 if(options.port) {
     port = Integer.parseInt(options.port)
 }
