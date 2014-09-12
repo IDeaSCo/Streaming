@@ -5,31 +5,30 @@ import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
 
 class StreamSink extends WebSocketServer {
-    public StreamSink(int port) {
-        super(new InetSocketAddress(port))
-    }
-
-    public StreamSink(InetSocketAddress address) {
-        super(address)
+    public StreamSink(String host, int port) {
+        super(new InetSocketAddress(host, port))
     }
 
     @Override
     void onOpen(WebSocket conn, ClientHandshake handshake) {
-
+        println("New Connection Received: ${handshake.getResourceDescriptor()}")
+        println("From: ${conn.remoteSocketAddress.address.hostAddress}...")
     }
 
     @Override
     void onClose(WebSocket conn, int code, String reason, boolean remote) {
-
+        println("Closed Connection: $conn, Code: $code, Reason: $reason, Remote: $remote")
     }
 
     @Override
     void onMessage(WebSocket conn, String message) {
-
+        println("Received Message from: $conn, Message: $message")
     }
 
     @Override
     void onError(WebSocket conn, Exception ex) {
-
+        println("Error from client: $conn, Error: $ex.message")
+        ex.printStackTrace()
     }
+
 }
