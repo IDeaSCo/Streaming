@@ -6,13 +6,13 @@ class DataFetcher {
     private final Sql sql
     private final String pmsData = 'Select * from [000028].sampleData'
 
-    DataFetcher(dbConfig = [:]) {
+    public DataFetcher(dbConfig = [:]) {
         if(dbConfig) {
             sql = Sql.newInstance(dbConfig.url, dbConfig.user, dbConfig.password, dbConfig.driver)
         }
     }
 
-    def forEachRowFetch(Closure closure) {
+    def fetchEachRow(Closure closure) {
         if(sql) {
             sql.eachRow(pmsData) { pmsDataRow ->
                 closure(pmsDataRow)

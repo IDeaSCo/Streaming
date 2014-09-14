@@ -1,6 +1,5 @@
 import client.DataFetcher
 import client.StreamSource
-import org.java_websocket.WebSocketImpl
 
 import java.nio.channels.NotYetConnectedException
 
@@ -42,7 +41,7 @@ try {
     //Giving the thread in connect() some time to start...problem solved for now!
     Thread.sleep(1000)
     println ('Connected')
-    dataFetcher.forEachRowFetch { row ->
+    dataFetcher.fetchEachRow { row ->
         println "Sending message...$row"
         source.send(row.toString())
     }
