@@ -22,7 +22,8 @@ class StreamSink extends WebSocketServer {
 
     @Override
     void onMessage(WebSocket conn, String message) {
-        println("Received Message from: $conn, Content: $message")
+        conn.send("Server ACKing Content: $message")
+        println("Received Message : $message")
     }
 
     @Override
