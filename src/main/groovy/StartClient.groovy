@@ -6,6 +6,7 @@ import java.nio.channels.NotYetConnectedException
 def cli = new CliBuilder(usage:'client -u <url>')
 cli.with {
     u  args:1, argName: 'url', longOpt:'url', 'REQUIRED, Server Url', optionalArg:false
+    t  args:1, argName: 'test', longOpt:'test', 'OPTIONAL, Activate Test Mode (ignores Database Connection)', optionalArg:true
 }
 
 def options = cli.parse(args)
@@ -32,7 +33,7 @@ def dbConfig = [url:'jdbc:sqlserver://localhost:1433', user:'sa', password:'', d
 //if you pass dbConfig in DataFetcher, it will start talking to database
 //and if you don't then it will not connect to DB and instead just send
 //10 messages...purely for debug purposes (to avoid connection to DB)
-def dataFetcher = new DataFetcher()
+def dataFetcher = options.t? new DataFetcher() : new DataFetcher(dbConfig)
 def source = new StreamSource(uri)
 println ('Connecting to Server...')
 source.connect()
