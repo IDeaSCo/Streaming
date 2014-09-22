@@ -3,13 +3,14 @@ import client.StreamSource
 
 import java.nio.channels.NotYetConnectedException
 
-def cli = new CliBuilder(usage:'client -s <serverUrl> -d <databaseUrl> [--dbUser=someUser] [--dbPwd=somePwd] [--dbDriver=someDriver]')
+def cli = new CliBuilder(usage:'client -s <serverUrl> -d <databaseUrl> [--dbUser=someUser] [--dbPwd=somePwd] [--dbDriver=someDriver] [--dbName=dbName]')
 cli.with {
     s  args:1, argName: 'server',longOpt:'serverUrl','OPTIONAL, Server Url, default is localhost', optionalArg:true
     d  args:1, argName: 'db',longOpt:'dburl','OPTIONAL,DB Url', optionalArg:true
     _  args:1, argName: 'dbUser',longOpt:'dbUser','OPTIONAL,DB User,Usage Eg: --dbUser=someUser', optionalArg:true
     _  args:1, argName: 'dbPwd',longOpt:'dbPwd','OPTIONAL,DB Password, Usage Eg: --dbPwd=somePwd', optionalArg:true
     _  args:1, argName: 'dbDriver',longOpt:'dbDriver','OPTIONAL,DB Driver,Usage Eg: --dbDriver=dbDriver', optionalArg:true
+    _  args:1, argName: 'dbName',longOpt:'dbName','OPTIONAL,DB Name,Usage Eg: --dbName=dbName', optionalArg:true
     t  args:0, argName: 'test', longOpt:'test', 'OPTIONAL,Activate Test Mode (ignores Database Connection)', optionalArg:true
 }
 
@@ -33,10 +34,12 @@ println "$serverUrl"
 def uri = new URL(serverUrl).toURI()
 
 def dbConfig = [url:options.d, user:options.dbUser, password:options.dbPwd, driver:options.dbDriver]
+def dbName = options.dbName
+println(dbName)
 //if you pass dbConfig in DataFetcher, it will start talking to database
 //and if you don't then it will not connect to DB and instead just send
 //10 messages...purely for debug purposes (to avoid connection to DB)
-def dataFetcher = options.t? new DataFetcher() : new DataFetcher(dbConfig)
+def dataFetcher = options.t? new DataFetcher() : new DataFetcher(dbConfig,dbName)
 def source = new StreamSource(uri)
 println ('Connecting to Server...')
 source.connect()
