@@ -1,3 +1,5 @@
+package server
+
 import server.StreamSink
 
 def cli = new CliBuilder(usage:'server [-h <ip or hostname>] [-p <number>]')

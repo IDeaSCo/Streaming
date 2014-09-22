@@ -1,9 +1,6 @@
 package client
 
-import groovy.sql.GroovyResultSet
 import groovy.sql.Sql
-
-import java.sql.ResultSet
 
 class DataFetcher {
     private final Sql sql

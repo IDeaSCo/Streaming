@@ -44,16 +44,16 @@ sql.execute """
 def howManyRecords = Integer.parseInt(options.recordCount)
 def howManyColumns = 1..35
 def insertStatement =
-    """
-      |INSERT INTO [000028].[dbo].$dbName
-      |     ([Col1],[Col2],[Col3],[Col4],[Col5],[Col6],[Col7],[Col8],[Col9],[Col10]
-      |     ,[Col11],[Col12],[Col13],[Col14],[Col15],[Col16],[Col17],[Col18],[Col19],[Col20]
-      |     ,[Col21],[Col22],[Col23],[Col24],[Col25],[Col26],[Col27],[Col28],[Col29],[Col30]
-      |     ,[Col31],[Col32],[Col33],[Col34],[Col35]
-      |     )
-      |  VALUES
-      |    (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-    """.stripMargin()
+  """
+    |INSERT INTO [000028].[dbo].$dbName
+    |     ([Col1],[Col2],[Col3],[Col4],[Col5],[Col6],[Col7],[Col8],[Col9],[Col10]
+    |     ,[Col11],[Col12],[Col13],[Col14],[Col15],[Col16],[Col17],[Col18],[Col19],[Col20]
+    |     ,[Col21],[Col22],[Col23],[Col24],[Col25],[Col26],[Col27],[Col28],[Col29],[Col30]
+    |     ,[Col31],[Col32],[Col33],[Col34],[Col35]
+    |     )
+    |  VALUES
+    |    (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  """.stripMargin()
 
 def batchSize = 10000
 def numberOfBatches = howManyRecords/batchSize

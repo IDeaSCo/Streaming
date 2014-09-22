@@ -22,6 +22,10 @@ project.ext {
     hamcrest = 'org.hamcrest:hamcrest-all:1.3'
     spock = 'org.spockframework:spock-core:0.7-groovy-2.0'
 
+    //Distribution settings
+    distsTemplateDir = 'distribution-template'
+    distsBinDir = "$distsDir/bin"
+
 }
 
 repositories {
@@ -37,3 +41,46 @@ dependencies {
     compile fileTree (dir: "${project.ext.unmanagedLibDir}", includes: ['*.jar'])
     testCompile(project.ext.hamcrest, project.ext.junit, project.ext.spock)
 }
+
+jar {
+//    manifest {
+//        attributes.putAll(project.ext.manifest)
+//    }
+
+    doLast {
+        copy {
+            from (configurations.compile.asPath.split(File.pathSeparator))
+            into "$libsDir"
+        }
+    }
+}
+
+def prepareExecutables() {
+    def allLibFiles = new File("$libsDir").list().collect { "libs/$it" }
+    new File("$distsTemplateDir").list().each { filename ->
+        if(filename.startsWith('client') || filename.startsWith('server')) {
+            def contents = new File("$distsTemplateDir/$filename").text
+            new FileWriter("$distsBinDir/$filename").withWriter { writer ->
+                if(filename.endsWith('.sh')) {
+                    writer.append contents.replace('%%JAVA_CLASS_PATH%%', allLibFiles.collect({"\$STREAMING_HOME/$it"}).join(":"))
+                }
+                if(filename.endsWith('.bat')) {
+                    writer.append contents.replace('%%JAVA_CLASS_PATH%%', allLibFiles.collect({"%STREAMING_HOME%/$it"}).join(";"))
+                }
+            }
+        }
+    }
+}
+
+
+task distribute(type:Zip, dependsOn: [assemble]) {
+    doFirst {
+        ant.mkdir(dir:"$distsBinDir")
+        prepareExecutables()
+    }
+    from project.ext.distsBinDir
+    from ("$libsDir") { into ('libs') }
+}
+
+
+build.dependsOn = ['distribute']

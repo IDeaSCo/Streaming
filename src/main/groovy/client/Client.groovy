@@ -1,3 +1,5 @@
+package client
+
 import client.DataFetcher
 import client.StreamSource
 
