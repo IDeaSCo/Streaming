@@ -1,8 +1,5 @@
 package client
 
-import client.DataFetcher
-import client.StreamSource
-
 import java.nio.channels.NotYetConnectedException
 
 def cli = new CliBuilder(usage:'client -s <serverUrl> -d <databaseUrl> [--dbUser=someUser] [--dbPwd=somePwd] [--dbDriver=someDriver] [--dbName=dbName]')
@@ -45,7 +42,7 @@ def pushTestData = options.t
 def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData) {
     def dataFetcher = shouldPushTestData ? new DataFetcher() : new DataFetcher(dbConfig, dbName)
     def source = new StreamSource(serverUrl)
-    println(" $senderName Connecting to Server")
+    println("$senderName Connecting to Server")
     source.connect()
     try {
         Thread.sleep(1000)
