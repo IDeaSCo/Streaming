@@ -2,7 +2,7 @@ import server.StreamSink
 
 def cli = new CliBuilder(usage:'server [-h <ip or hostname>] [-p <number>]')
 cli.with {
-    h  args:1, argName: 'host', longOpt:'host', 'OPTIONAL, Server IP/Host, default is localhost', optionalArg:true
+    s  args:1, argName: 'serverUrl', longOpt:'serverUrl', 'OPTIONAL, Server IP/URL, default is localhost', optionalArg:true
     p  args:1, argName: 'port', longOpt:'port', 'OPTIONAL, Server Port, default is 9080', optionalArg:true
 }
 
@@ -22,8 +22,8 @@ if(options.arguments()){
 
 def host = 'localhost'
 
-if(options.h) {
-    host = options.h
+if(options.s) {
+    host = options.s
 }
 
 def port = 9080
