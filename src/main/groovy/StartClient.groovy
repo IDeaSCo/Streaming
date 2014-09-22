@@ -5,7 +5,7 @@ import java.nio.channels.NotYetConnectedException
 
 def cli = new CliBuilder(usage:'client -s <serverUrl> -d <databaseUrl> [--dbUser=someUser] [--dbPwd=somePwd] [--dbDriver=someDriver]')
 cli.with {
-    s  args:1, argName: 'server',longOpt:'serverUrl','REQUIRED, Server Url', optionalArg:false
+    s  args:1, argName: 'server',longOpt:'serverUrl','OPTIONAL, Server Url, default is localhost', optionalArg:true
     d  args:1, argName: 'db',longOpt:'dburl','OPTIONAL,DB Url', optionalArg:true
     _  args:1, argName: 'dbUser',longOpt:'dbUser','OPTIONAL,DB User,Usage Eg: --dbUser=someUser', optionalArg:true
     _  args:1, argName: 'dbPwd',longOpt:'dbPwd','OPTIONAL,DB Password, Usage Eg: --dbPwd=somePwd', optionalArg:true
@@ -27,7 +27,7 @@ if(options.arguments()){
     return
 }
 
-def serverUrl = options.s
+def serverUrl = options.s? options.s : 'http://localhost:9080'
 println "$serverUrl"
 
 def uri = new URL(serverUrl).toURI()
