@@ -12,6 +12,7 @@ cli.with {
     _  args:1, argName: 'dbDriver',longOpt:'dbDriver','OPTIONAL,DB Driver,Usage Eg: --dbDriver=dbDriver', optionalArg:true
     _  args:1, argName: 'dbName',longOpt:'dbName','OPTIONAL,DB Name,Usage Eg: --dbName=dbName', optionalArg:true
     t  args:0, argName: 'test', longOpt:'test', 'OPTIONAL,Activate Test Mode (ignores Database Connection)', optionalArg:true
+    c  args:1, argName: 'numberOfClients',longOpt:'numberOfClients','OPTIONAL,Number of Client Connection to Spawn, Default is 1, Usage Eg: --numberOfClients=2', optionalArg:true
 }
 
 def options = cli.parse(args)
@@ -20,10 +21,8 @@ if(!options) {
     return
 }
 
-PrintWriter console = new PrintWriter(System.out,true)
-
 if(options.arguments()){
-    console.println "Cannot understand ${options.arguments()}"
+    println "Cannot understand ${options.arguments()}"
     cli.usage()
     return
 }
@@ -31,31 +30,40 @@ if(options.arguments()){
 def serverUrl = options.s? options.s : 'http://localhost:9080'
 println "$serverUrl"
 
+def numberOfClients = options.c ? Integer.parseInt(options.c) : 1
+println("Number of connections spawn : ${numberOfClients}")
 def uri = new URL(serverUrl).toURI()
 
 def dbConfig = [url:options.d, user:options.dbUser, password:options.dbPwd, driver:options.dbDriver]
 def dbName = options.dbName
 println(dbName)
-//if you pass dbConfig in DataFetcher, it will start talking to database
-//and if you don't then it will not connect to DB and instead just send
-//10 messages...purely for debug purposes (to avoid connection to DB)
-def dataFetcher = options.t? new DataFetcher() : new DataFetcher(dbConfig,dbName)
-def source = new StreamSource(uri)
-println ('Connecting to Server...')
-source.connect()
-println('Connected')
-try {
-    //Giving the thread in connect() some time to start...problem solved for now!
-    Thread.sleep(1000)
-    println ('Connected')
-    dataFetcher.fetchEachRow { row ->
-        println "Sending message...${row}"
-        source.send("${row}")
+
+def pushTestData = options.t
+
+def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData) {
+    def dataFetcher = shouldPushTestData ? new DataFetcher() : new DataFetcher(dbConfig, dbName)
+    def source = new StreamSource(serverUrl)
+    println(" $senderName Connecting to Server")
+    source.connect()
+    try {
+        Thread.sleep(1000)
+        def startTime = System.currentTimeMillis()
+        dataFetcher.fetchEachRow { row ->
+            source.send("Sender: $senderName, Data: ${row}")
+        }
+        def endTime = System.currentTimeMillis()
+        source.send("All Messages are delivered to Sink from Sender: $senderName, Data: Total data transfer time : ${(endTime - startTime) / 1000} sec ")
+    } catch (NotYetConnectedException nye) {
+        println(nye.message)
+    } finally {
+        println("$senderName closing Connection with Server...")
+        source.close()
     }
-    println('Message has been delivered to Sink..')
-} catch (NotYetConnectedException nye){
-    println(nye.message)
-} finally {
-    println ('Closing Connection with Server...')
-    source.close()
+}
+
+(1..numberOfClients).each { number ->
+    def sourceClientName = "SourceClient#$number"
+    Thread.start(sourceClientName) {
+        pushData(sourceClientName, dbConfig, dbName, uri, pushTestData)
+    }
 }

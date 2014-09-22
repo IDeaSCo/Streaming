@@ -5,11 +5,11 @@ import groovy.sql.Sql
 
 class DataFetcher {
     private final Sql sql
-    private dbName
+    private final dbName
 
 
 
-    public DataFetcher(dbConfig = [:], dbName) {
+    public DataFetcher(dbConfig = [:], dbName = "") {
         if(dbConfig) {
             sql = Sql.newInstance(dbConfig.url, dbConfig.user, dbConfig.password, dbConfig.driver)
             this.dbName = dbName

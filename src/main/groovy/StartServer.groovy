@@ -33,6 +33,6 @@ if(options.port) {
 println "Starting Server...ip = $host, port = $port"
 
 def sink = new StreamSink(host, port)
-println 'Ready to accept websocket connections...'
+println 'Ready to accept websocket connections.'
 sink.start()
 

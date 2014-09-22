@@ -16,10 +16,8 @@ if(!options) {
     return
 }
 
-PrintWriter console = new PrintWriter(System.out,true)
-
 if(options.arguments()){
-    console.println "Cannot understand ${options.arguments()}"
+    println "Cannot understand ${options.arguments()}"
     cli.usage()
     return
 }
@@ -43,7 +41,7 @@ sql.execute """
             """.stripMargin()
 
 
-def howManyRecords = options.recordCount
+def howManyRecords = Integer.parseInt(options.recordCount)
 def howManyColumns = 1..35
 def insertStatement =
     """
@@ -57,13 +55,20 @@ def insertStatement =
       |    (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """.stripMargin()
 
-sql.withBatch(howManyRecords.toInteger(), insertStatement) { ps ->
-    howManyRecords.toInteger().times {
-        def rowData = howManyColumns.collect { "Col#$it".toString() }
-        ps.addBatch(*rowData)
+def batchSize = 10000
+def numberOfBatches = howManyRecords/batchSize
+
+def start = System.currentTimeMillis()
+println "Started on $start"
+numberOfBatches.times {
+    sql.withBatch(batchSize, insertStatement) { ps ->
+        batchSize.times {
+            def rowData = howManyColumns.collect { "Col#$it".toString() }
+            ps.addBatch(*rowData)
+        }
     }
+    println "Inserted $batchSize records...remaining ${howManyRecords - batchSize * it}"
 }
-def selectQuery = """
-                    |SELECT * FROM [000028].[dbo].$dbName
-                   """.stripMargin()
-println "Successfully Added ${sql.rows(selectQuery).size()} Rows"
+
+def timeTaken = System.currentTimeMillis() - start
+println "Time Taken : ${timeTaken / 1000} secs"
