@@ -3,14 +3,14 @@ import client.StreamSource
 
 import java.nio.channels.NotYetConnectedException
 
-def cli = new CliBuilder(usage:'client -u <url>')
+def cli = new CliBuilder(usage:'client -s <serverUrl> -d <databaseUrl> [--dbUser=someUser] [--dbPwd=somePwd] [--dbDriver=someDriver]')
 cli.with {
-    u  args:1, argName: 'url', longOpt:'url', 'REQUIRED, Server Url', optionalArg:false
-    a  args:2, argName: 'dburl', longOpt:'dburl', 'REQUIRED , DB Url', optionalArg:false
-    b  args:3, argName: 'dbuser', longOpt:'dbuser', 'REQUIRED , DB User', optionalArg:false
-    c  args:4, argName: 'dbpswd', longOpt:'dbpswd', 'REQUIRED , DB Password', optionalArg:false
-    d  args:5, argName: 'dbdriver', longOpt:'dbdriver', 'REQUIRED , DB Driver', optionalArg:false
-    t  args:1, argName: 'test', longOpt:'test', 'OPTIONAL, Activate Test Mode (ignores Database Connection)', optionalArg:true
+    s  args:1, argName: 'server',longOpt:'serverUrl','REQUIRED, Server Url', optionalArg:false
+    d  args:1, argName: 'db',longOpt:'dburl','OPTIONAL,DB Url', optionalArg:true
+    _  args:1, argName: 'dbUser',longOpt:'dbUser','OPTIONAL,DB User,Usage Eg: --dbUser=someUser', optionalArg:true
+    _  args:1, argName: 'dbPwd',longOpt:'dbPwd','OPTIONAL,DB Password, Usage Eg: --dbPwd=somePwd', optionalArg:true
+    _  args:1, argName: 'dbDriver',longOpt:'dbDriver','OPTIONAL,DB Driver,Usage Eg: --dbDriver=dbDriver', optionalArg:true
+    t  args:0, argName: 'test', longOpt:'test', 'OPTIONAL,Activate Test Mode (ignores Database Connection)', optionalArg:true
 }
 
 def options = cli.parse(args)
@@ -27,12 +27,12 @@ if(options.arguments()){
     return
 }
 
-def url = options.u
-println "$url"
+def serverUrl = options.s
+println "$serverUrl"
 
-def uri = new URL(url).toURI()
+def uri = new URL(serverUrl).toURI()
 
-def dbConfig = [url:options.a, user:options.b, password:options.c, driver:options.d]
+def dbConfig = [url:options.d, user:options.dbUser, password:options.dbPwd, driver:options.dbDriver]
 //if you pass dbConfig in DataFetcher, it will start talking to database
 //and if you don't then it will not connect to DB and instead just send
 //10 messages...purely for debug purposes (to avoid connection to DB)
@@ -46,8 +46,8 @@ try {
     Thread.sleep(1000)
     println ('Connected')
     dataFetcher.fetchEachRow { row ->
-        println "Sending message...${row.toRowResult().values().toString()}"
-        source.send(row.toRowResult().values().toString())
+        println "Sending message...${row}"
+        source.send("${row}")
     }
     println('Message has been delivered to Sink..')
 } catch (NotYetConnectedException nye){

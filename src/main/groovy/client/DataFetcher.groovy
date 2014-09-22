@@ -1,5 +1,6 @@
 package client
 
+import groovy.sql.GroovyResultSet
 import groovy.sql.Sql
 
 class DataFetcher {
@@ -14,8 +15,8 @@ class DataFetcher {
 
     def fetchEachRow(Closure closure) {
         if(sql) {
-            sql.eachRow(pmsData) { pmsDataRow ->
-                closure(pmsDataRow)
+            sql.eachRow(pmsData) { row ->
+                closure(row)
             }
         } else {
             10.times {
