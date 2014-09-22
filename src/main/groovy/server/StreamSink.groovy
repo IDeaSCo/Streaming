@@ -11,8 +11,7 @@ class StreamSink extends WebSocketServer {
 
     @Override
     void onOpen(WebSocket conn, ClientHandshake handshake) {
-        println("New Connection Received: ${handshake.getResourceDescriptor()}")
-        println("From: ${conn.remoteSocketAddress.address.hostAddress}...")
+        println("New Connection Received From: ${conn.remoteSocketAddress.address.hostAddress}...")
     }
 
     @Override
