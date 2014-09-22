@@ -4,7 +4,7 @@ import groovy.sql.Sql
 
 class DataFetcher {
     private final Sql sql
-    private final String pmsData = 'Select * from [000028].sampleData'
+    private final String pmsData = 'Select * from [000028].[dbo].sampleData'
 
     public DataFetcher(dbConfig = [:]) {
         if(dbConfig) {

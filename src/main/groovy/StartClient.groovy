@@ -6,6 +6,10 @@ import java.nio.channels.NotYetConnectedException
 def cli = new CliBuilder(usage:'client -u <url>')
 cli.with {
     u  args:1, argName: 'url', longOpt:'url', 'REQUIRED, Server Url', optionalArg:false
+    a  args:2, argName: 'dburl', longOpt:'dburl', 'REQUIRED , DB Url', optionalArg:false
+    b  args:3, argName: 'dbuser', longOpt:'dbuser', 'REQUIRED , DB User', optionalArg:false
+    c  args:4, argName: 'dbpswd', longOpt:'dbpswd', 'REQUIRED , DB Password', optionalArg:false
+    d  args:5, argName: 'dbdriver', longOpt:'dbdriver', 'REQUIRED , DB Driver', optionalArg:false
     t  args:1, argName: 'test', longOpt:'test', 'OPTIONAL, Activate Test Mode (ignores Database Connection)', optionalArg:true
 }
 
@@ -28,8 +32,7 @@ println "$url"
 
 def uri = new URL(url).toURI()
 
-//todo: make cmd args for dbConfig later...
-def dbConfig = [url:'jdbc:sqlserver://localhost:1433', user:'sa', password:'', driver:'com.microsoft.sqlserver.jdbc.SQLServerDriver']
+def dbConfig = [url:options.a, user:options.b, password:options.c, driver:options.d]
 //if you pass dbConfig in DataFetcher, it will start talking to database
 //and if you don't then it will not connect to DB and instead just send
 //10 messages...purely for debug purposes (to avoid connection to DB)
@@ -43,8 +46,8 @@ try {
     Thread.sleep(1000)
     println ('Connected')
     dataFetcher.fetchEachRow { row ->
-        println "Sending message...$row"
-        source.send(row.toString())
+        println "Sending message...${row.toRowResult().values().toString()}"
+        source.send(row.toRowResult().values().toString())
     }
     println('Message has been delivered to Sink..')
 } catch (NotYetConnectedException nye){
