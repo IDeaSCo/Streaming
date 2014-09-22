@@ -28,15 +28,15 @@ if(options.arguments()){
 }
 
 def serverUrl = options.s? options.s : 'http://localhost:9080'
-println "$serverUrl"
+println "Server URL : $serverUrl"
 
 def numberOfClients = options.c ? Integer.parseInt(options.c) : 1
-println("Number of connections spawn : ${numberOfClients}")
+println("Number of connections to spawn : ${numberOfClients}")
 def uri = new URL(serverUrl).toURI()
 
 def dbConfig = [url:options.d, user:options.dbUser, password:options.dbPwd, driver:options.dbDriver]
 def dbName = options.dbName
-println(dbName)
+println("Using DB : $dbName")
 
 def pushTestData = options.t
 
@@ -47,12 +47,14 @@ def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData) {
     source.connect()
     try {
         Thread.sleep(1000)
+        def count = 0
         def startTime = System.currentTimeMillis()
         dataFetcher.fetchEachRow { row ->
             source.send("Sender: $senderName, Data: ${row}")
+            count++
         }
         def endTime = System.currentTimeMillis()
-        source.send("All Messages are delivered to Sink from Sender: $senderName, Data: Total data transfer time : ${(endTime - startTime) / 1000} sec ")
+        source.send("Total $count Messages delivered to Sink from Sender: $senderName, Data: Total data transfer time : ${(endTime - startTime) / 1000} sec ")
     } catch (NotYetConnectedException nye) {
         println(nye.message)
     } finally {

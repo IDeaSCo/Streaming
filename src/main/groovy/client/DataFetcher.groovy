@@ -3,26 +3,28 @@ package client
 import groovy.sql.GroovyResultSet
 import groovy.sql.Sql
 
+import java.sql.ResultSet
+
 class DataFetcher {
     private final Sql sql
     private final dbName
 
-
-
     public DataFetcher(dbConfig = [:], dbName = "") {
         if(dbConfig) {
-            sql = Sql.newInstance(dbConfig.url, dbConfig.user, dbConfig.password, dbConfig.driver)
+            def properties = new Properties()
+            properties.setProperty('user', dbConfig.user)
+            properties.setProperty('password', dbConfig.password)
+            properties.setProperty('selectMethod', 'cursor')
+            sql = Sql.newInstance(dbConfig.url, properties, dbConfig.driver)
             this.dbName = dbName
         }
     }
 
     def fetchEachRow(Closure closure) {
         if(sql) {
-
             String pmsData = """
                     |SELECT * FROM [000028].[dbo].$dbName
                    """.stripMargin()
-            println "Successfully Fetched ${sql.rows(pmsData).size()} Rows"
             sql.eachRow(pmsData) { row ->
                 closure(row)
             }
