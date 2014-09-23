@@ -1,7 +1,5 @@
 package server
 
-import server.StreamSink
-
 def cli = new CliBuilder(usage:'server [-h <ip or hostname>] [-p <number>]')
 cli.with {
     s  args:1, argName: 'serverUrl', longOpt:'serverUrl', 'OPTIONAL, Server IP/URL, default is localhost', optionalArg:true

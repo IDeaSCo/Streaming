@@ -48,9 +48,10 @@ def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData) {
     def dataFetcher = shouldPushTestData ? new DataFetcher() : new DataFetcher(dbConfig, dbName)
     def source = new StreamSource(serverUrl)
     println("$senderName Connecting to Server")
-    source.connect()
+    if (source.connectBlocking()) {
+        println("$senderName Now Connected to Server...Ready to send data")
+    }
     try {
-        Thread.sleep(1000)
         def count = 0
         def startTime = System.currentTimeMillis()
         dataFetcher.fetchEachRow { row ->
