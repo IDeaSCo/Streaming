@@ -26,6 +26,11 @@ if(options.arguments()){
     return
 }
 
+if(options.t == false && options.d == false) {
+    cli.usage()
+    return
+}
+
 def serverUrl = options.s? options.s : 'http://localhost:9080'
 println "Server URL : $serverUrl"
 
