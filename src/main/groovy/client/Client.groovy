@@ -43,9 +43,18 @@ def dbName = options.dbName
 println("Using DB : $dbName")
 
 def pushTestData = options.t
+Runtime runtime = Runtime.getRuntime();
 
-def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData) {
+long toMegabytes(long bytes) {
+    bytes / (1024L * 1024L)
+}
+def usedMemory(runtime) {
+    runtime.totalMemory() - runtime.freeMemory()
+}
+
+def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtime) {
     def dataFetcher = shouldPushTestData ? new DataFetcher() : new DataFetcher(dbConfig, dbName)
+    long maxMemoryUsed = usedMemory(runtime)
     def source = new StreamSource(serverUrl)
     println("$senderName Connecting to Server")
     if (source.connectBlocking()) {
@@ -57,9 +66,14 @@ def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData) {
         dataFetcher.fetchEachRow { row ->
             source.send("Sender: $senderName, Data: ${row}")
             count++
+            // Calculate the used memory for every 100 recs. Report Max of each batch
+            if(count % 1000 == 0){
+                maxMemoryUsed = Math.max(maxMemoryUsed, usedMemory(runtime));
+            }
         }
         def endTime = System.currentTimeMillis()
-        source.send("Total $count Messages delivered to Sink from Sender: $senderName, Data: Total data transfer time : ${(endTime - startTime) / 1000} sec ")
+        def memory = ['memTotal': toMegabytes(runtime.totalMemory()), 'memUsed': toMegabytes(maxMemoryUsed)]
+        source.send("Total $count Messages delivered to Sink from Sender: $senderName, Data: Total data transfer time : ${(endTime - startTime) / 1000} sec,  Memory (MB): $memory")
     } catch (NotYetConnectedException nye) {
         println(nye.message)
     } finally {
@@ -71,6 +85,6 @@ def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData) {
 (1..numberOfClients).each { number ->
     def sourceClientName = "SourceClient#$number"
     Thread.start(sourceClientName) {
-        pushData(sourceClientName, dbConfig, dbName, uri, pushTestData)
+        pushData(sourceClientName, dbConfig, dbName, uri, pushTestData, runtime)
     }
 }

@@ -55,11 +55,10 @@ def insertStatement =
     |    (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   """.stripMargin()
 
-def batchSize = 10000
+def batchSize = 1000
 def numberOfBatches = howManyRecords/batchSize
 
 def start = System.currentTimeMillis()
-println "Started on $start"
 numberOfBatches.times {
     sql.withBatch(batchSize, insertStatement) { ps ->
         batchSize.times {
