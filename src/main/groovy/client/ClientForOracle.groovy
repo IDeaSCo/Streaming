@@ -53,7 +53,7 @@ def usedMemory(runtime) {
 }
 
 def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtime) {
-    def dataFetcher = shouldPushTestData ? new DataFetcher() : new DataFetcher(dbConfig, dbName)
+    def dataFetcher = shouldPushTestData ? new DataFetcherForOracle() : new DataFetcherForOracle(dbConfig, dbName)
     long maxMemoryUsed = usedMemory(runtime)
     def source = new StreamSource(serverUrl)
     println("$senderName Connecting to Server")
@@ -64,10 +64,9 @@ def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtim
         def count = 0
         def startTime = System.currentTimeMillis()
         println ("Before fetching memory : ${usedMemory(runtime)}")
-        dataFetcher.fetchEachRow { row ->
+        dataFetcher.fetchEachRowOracle { row ->
             source.send("Sender: $senderName, Data: ${row}")
             count++
-            // Calculate the used memory for every 100 recs. Report Max of each batch
             if(count % 1000 == 0){
                 maxMemoryUsed = Math.max(maxMemoryUsed, usedMemory(runtime));
             }
