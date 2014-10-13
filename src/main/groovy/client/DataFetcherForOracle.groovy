@@ -11,7 +11,8 @@ class DataFetcherForOracle {
             def properties = new Properties()
             properties.setProperty('user', dbConfig.user)
             properties.setProperty('password', dbConfig.password)
-            //properties.setProperty('responseBuffering','adaptive')
+            //response buffering has no impact in Oracle
+            // properties.setProperty('responseBuffering','adaptive')
             sql = Sql.newInstance(dbConfig.url, properties, dbConfig.driver)
             this.dbName = dbName
         }

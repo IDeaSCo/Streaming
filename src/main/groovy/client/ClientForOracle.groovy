@@ -12,6 +12,7 @@ cli.with {
     _  args:1, argName: 'dbName',longOpt:'dbName','OPTIONAL,DB Name,Usage Eg: --dbName=dbName', optionalArg:true
     t  args:0, argName: 'test', longOpt:'test', 'OPTIONAL,Activate Test Mode (ignores Database Connection)', optionalArg:true
     c  args:1, argName: 'numberOfClients',longOpt:'numberOfClients','OPTIONAL,Number of Client Connection to Spawn, Default is 1, Usage Eg: --numberOfClients=2', optionalArg:true
+    n  args:1, argName: 'collationCount',longOpt:'collationCount','OPTIONAL,Number of records to collate before send, Default is 1, Usage Eg: --collationCount=100', optionalArg:true
 }
 
 def options = cli.parse(args)
@@ -38,6 +39,9 @@ def numberOfClients = options.c ? Integer.parseInt(options.c) : 1
 println("Number of connections to spawn : ${numberOfClients}")
 def uri = new URL(serverUrl).toURI()
 
+def collationCount = options.n? Integer.parseInt(options.n) :1
+println("Number of records to collate before sending : ${collationCount}")
+
 def dbConfig = [url:options.d, user:options.dbUser, password:options.dbPwd, driver:options.dbDriver]
 def dbName = options.dbName
 println("Using DB : $dbName")
@@ -52,7 +56,7 @@ def usedMemory(runtime) {
     runtime.totalMemory() - runtime.freeMemory()
 }
 
-def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtime) {
+def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtime, collationCount) {
     def dataFetcher = shouldPushTestData ? new DataFetcherForOracle() : new DataFetcherForOracle(dbConfig, dbName)
     long maxMemoryUsed = usedMemory(runtime)
     def source = new StreamSource(serverUrl)
@@ -64,8 +68,16 @@ def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtim
         def count = 0
         def startTime = System.currentTimeMillis()
         println ("Before fetching memory : ${usedMemory(runtime)}")
+        def collatedData = new StringBuilder()
+        def recordCount = 0;
         dataFetcher.fetchEachRowOracle { row ->
-            source.send("Sender: $senderName, Data: ${row}")
+            collatedData << row
+            recordCount ++
+            if(recordCount == collationCount) {
+                source.send("Sender: $senderName, Data: ${collatedData}")
+                collatedData = new StringBuilder()
+                recordCount = 0
+            }
             count++
             if(count % 1000 == 0){
                 maxMemoryUsed = Math.max(maxMemoryUsed, usedMemory(runtime));
@@ -87,6 +99,6 @@ def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtim
 (1..numberOfClients).each { number ->
     def sourceClientName = "SourceClient#$number"
     Thread.start(sourceClientName) {
-        pushData(sourceClientName, dbConfig, dbName, uri, pushTestData, runtime)
+        pushData(sourceClientName, dbConfig, dbName, uri, pushTestData, runtime, collationCount)
     }
 }
