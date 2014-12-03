@@ -59,7 +59,7 @@ def usedMemory(runtime) {
 def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtime, collationCount) {
     def dataFetcher = shouldPushTestData ? new DataFetcherForOracle() : new DataFetcherForOracle(dbConfig, dbName)
     long maxMemoryUsed = usedMemory(runtime)
-    def source = new StreamSource(serverUrl)
+    def source = new StreamSourceWS(serverUrl)
     println("$senderName Connecting to Server")
     if (source.connectBlocking()) {
         println("$senderName Now Connected to Server...Ready to send data")
@@ -74,7 +74,7 @@ def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtim
             collatedData << row
             recordCount ++
             if(recordCount == collationCount) {
-                source.send("Sender: $senderName, Data: ${collatedData}")
+                source.send("Sender: $senderName,Count:$count,  Data: ${collatedData}")
                 collatedData = new StringBuilder()
                 recordCount = 0
             }
@@ -85,12 +85,13 @@ def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtim
         }
         def endTime = System.currentTimeMillis()
         def memory = ['memTotal': toMegabytes(runtime.totalMemory()), 'memUsed': toMegabytes(maxMemoryUsed)]
-        source.send("Total $count Messages delivered to Sink from Sender: $senderName, Data: Total data transfer time : ${(endTime - startTime) / 1000} sec,  Memory (MB): $memory")
+        source.send("Total $count Messages delivered to Sink from Sender: $senderName,\n Data: Total data transfer time : ${(endTime - startTime) / 1000} sec,  \nMemory (MB): $memory")
     } catch (NotYetConnectedException nye) {
         println(nye.message)
     } finally {
         println("$senderName closing Connection with Server...")
         source.close()
+
     }
 }
 

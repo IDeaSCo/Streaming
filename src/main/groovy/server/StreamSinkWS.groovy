@@ -4,13 +4,14 @@ import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
 
-class StreamSink extends WebSocketServer {
-    public StreamSink(String host, int port) {
+class StreamSinkWS extends WebSocketServer {
+    public StreamSinkWS(String host, int port) {
         super(new InetSocketAddress(host, port))
     }
-
+     def
     @Override
     void onOpen(WebSocket conn, ClientHandshake handshake) {
+
         println("New Connection Received From: ${conn.remoteSocketAddress.address.hostAddress}...")
     }
 
@@ -31,5 +32,7 @@ class StreamSink extends WebSocketServer {
         println("Error from client: $conn, Error: $ex.message")
         ex.printStackTrace()
     }
+
+
 
 }
