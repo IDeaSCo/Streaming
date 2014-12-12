@@ -4,15 +4,25 @@ package web
 def host = 'localhost'
 
 
-def ports = [8025, 8026, 8027]
+def ports = [8025,8026,8027,8028,8029]
 
 println "Starting Server...ip = $host, port = $ports"
 
-def sink1 = new SocketStreamSink(ports[0])
-def sink2 = new SocketStreamSink(ports[1])
-def sink3 = new SocketStreamSink(ports[2])
-println "Ready to accept data over $ports."
-sink1.start()
-sink2.start()
+def sinks = []
+
+for(port in ports){
+
+    sinks.add(new SocketStreamSink(port))
+
+    }
+
+(0..(ports.size()-1)).each {number ->
+        def sinkSocket = "Sink#$number"
+        Thread.start(sinkSocket) {
+            println("trying to connect to socket number ${sinks[number]}")
+            sinks[number].start()
+        }
+}
+
 
 

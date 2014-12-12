@@ -1,5 +1,15 @@
 package client
 
+import server.StreamSinkWS
+import java.security.KeyStore;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
+import org.java_websocket.WebSocketImpl;
+
+
 import java.nio.channels.NotYetConnectedException
 
 def cli = new CliBuilder(usage:'client -s <serverUrl> -d <databaseUrl> [--dbUser=someUser] [--dbPwd=somePwd] [--dbDriver=someDriver] [--dbName=dbName]')
@@ -32,7 +42,7 @@ if(options.t == false && options.d == false) {
     return
 }
 
-def serverUrl = options.s? options.s : 'http://localhost:9080'
+def serverUrl = options.s? options.s : 'wss://localhost:9080'
 println "Server URL : $serverUrl"
 
 def numberOfClients = options.c ? Integer.parseInt(options.c) : 1
@@ -56,10 +66,40 @@ def usedMemory(runtime) {
     runtime.totalMemory() - runtime.freeMemory()
 }
 
-def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtime, collationCount) {
+
+
+
+def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtime, collationCount, numberOfClients) {
     def dataFetcher = shouldPushTestData ? new DataFetcherForOracle() : new DataFetcherForOracle(dbConfig, dbName)
     long maxMemoryUsed = usedMemory(runtime)
-    def source = new StreamSourceWS(serverUrl)
+
+    StreamSourceWS source = new StreamSourceWS( serverUrl );
+
+// load up the key store
+    String STORETYPE = "JKS";
+//    String KEYSTORE = "C:\\Users\\idnais\\Documents\\GitHub\\Streaming\\src\\main\\groovy\\server\\keystore.jks";
+    URI KEYSTORE = Thread.currentThread().getContextClassLoader().getResource('keystore.jks').toURI()
+    String STOREPASSWORD = "changeit";
+    String KEYPASSWORD = "changeit";
+
+    KeyStore ks = KeyStore.getInstance( STORETYPE );
+    File kf = new File( KEYSTORE );
+    ks.load( new FileInputStream( kf ), STOREPASSWORD.toCharArray() );
+
+    KeyManagerFactory kmf = KeyManagerFactory.getInstance( "SunX509" );
+    kmf.init( ks, KEYPASSWORD.toCharArray() );
+    TrustManagerFactory tmf = TrustManagerFactory.getInstance( "SunX509" );
+    tmf.init( ks );
+
+    SSLContext sslContext = null;
+    sslContext = SSLContext.getInstance( "TLS" );
+    sslContext.init( kmf.getKeyManagers(), tmf.getTrustManagers(), null );
+// sslContext.init( null, null, null ); // will use java's default key and trust store which is sufficient unless you deal with self-signed certificates
+
+    SSLSocketFactory factory = sslContext.getSocketFactory();// (SSLSocketFactory) SSLSocketFactory.getDefault();
+
+    source.setSocket( factory.createSocket() );
+
     println("$senderName Connecting to Server")
     if (source.connectBlocking()) {
         println("$senderName Now Connected to Server...Ready to send data")
@@ -74,7 +114,7 @@ def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtim
             collatedData << row
             recordCount ++
             if(recordCount == collationCount) {
-                source.send("Sender: $senderName,Count:$count,  Data: ${collatedData}")
+                source.send("$numberOfClients Sender: $senderName,Count:$count,  Data: ${collatedData}")
                 collatedData = new StringBuilder()
                 recordCount = 0
             }
@@ -85,7 +125,7 @@ def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtim
         }
         def endTime = System.currentTimeMillis()
         def memory = ['memTotal': toMegabytes(runtime.totalMemory()), 'memUsed': toMegabytes(maxMemoryUsed)]
-        source.send("Total $count Messages delivered to Sink from Sender: $senderName,\n Data: Total data transfer time : ${(endTime - startTime) / 1000} sec,  \nMemory (MB): $memory")
+        source.send("Sender: $senderName : Client Side time : ${(endTime - startTime) / 1000} sec, Memory (MB): $memory")
     } catch (NotYetConnectedException nye) {
         println(nye.message)
     } finally {
@@ -100,6 +140,6 @@ def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtim
 (1..numberOfClients).each { number ->
     def sourceClientName = "SourceClient#$number"
     Thread.start(sourceClientName) {
-        pushData(sourceClientName, dbConfig, dbName, uri, pushTestData, runtime, collationCount)
+        pushData(sourceClientName, dbConfig, dbName, uri, pushTestData, runtime, collationCount, numberOfClients)
     }
 }

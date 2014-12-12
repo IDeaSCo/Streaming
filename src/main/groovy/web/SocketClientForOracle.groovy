@@ -56,10 +56,10 @@ def usedMemory(runtime) {
     runtime.totalMemory() - runtime.freeMemory()
 }
 
-def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtime, collationCount) {
+def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtime, collationCount, port) {
     def dataFetcher = shouldPushTestData ? new DataFetcherForOracle() : new DataFetcherForOracle(dbConfig, dbName)
     long maxMemoryUsed = usedMemory(runtime)
-    def source = new SocketStreamSource(8025,'172.26.122.106')
+    def source = new SocketStreamSource(port,'172.26.122.106')
     println("$senderName Connecting to Server")
 
     def count = 0
@@ -82,15 +82,15 @@ def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtim
     }
     def endTime = System.currentTimeMillis()
     def memory = ['memTotal': toMegabytes(runtime.totalMemory()), 'memUsed': toMegabytes(maxMemoryUsed)]
-    source.send("Total $count Messages delivered to Sink from Sender: $senderName,\n Data: Total data transfer time : ${(endTime - startTime) / 1000} sec,  \nMemory (MB): $memory")
+    source.send("Total $count Sender: $senderName,\n time : ${(endTime - startTime) / 1000} sec,  \nMemory (MB): ${memory.get("memUsed")}\n")
     source.close()
 }
 
-
+def ports = [8025, 8026, 8027, 8028, 8029]
 
 (1..numberOfClients).each { number ->
     def sourceClientName = "SourceClient#$number"
     Thread.start(sourceClientName) {
-        pushData(sourceClientName, dbConfig, dbName, uri, pushTestData, runtime, collationCount)
+        pushData(sourceClientName, dbConfig, dbName, uri, pushTestData, runtime, collationCount, ports[number-1])
     }
 }

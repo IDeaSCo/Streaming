@@ -10,7 +10,9 @@ class SocketStreamSource {
         this.port = port
         this.destination = destination
         try {
+            println "trying to connect to port number $port"
             socket = new Socket(destination, port)
+            println("connected to port number $port")
         }catch (Exception e){
            e.printStackTrace()
         }

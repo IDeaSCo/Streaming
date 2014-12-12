@@ -15,13 +15,14 @@ project.ext {
     groovy = 'org.codehaus.groovy:groovy-all:2.3.6'
     commonsCli = 'commons-cli:commons-cli:1.1'
     log4j = 'log4j:log4j:1.2.17'
-    websocket = 'org.java-websocket:Java-WebSocket:1.3.0'
+    websocket = 'org.java-websocket:Java-WebSocket:1.3.1-SNAPSHOT'
     unmanagedLibDir = "$projectDir/lib"
     oracle = 'cn.guoyukun.jdbc:oracle-ojdbc6:11.2.0.3.0'
     servlet = 'javax.servlet:servlet-api:2.5'
     httpClient = 'org.codehaus.groovy.modules.http-builder:http-builder:0.7'
     slf4j = 'org.slf4j:slf4j-api:1.7.5'
     log4jBinding = 'org.slf4j:slf4j-log4j12:1.7.5'
+    jettyServer = 'org.eclipse.jetty:jetty-server:9.2.5.v20141112'
 
 
     //test-libs
@@ -44,12 +45,17 @@ repositories {
     maven {
         url 'http://code.google.com/p/google-maven-repository'
     }
+    maven{
+        url 'http://codenvycorp.com/repository'
+    }
+
+
 }
 
 
 dependencies {
     compile(project.ext.groovy, project.ext.commonsCli, project.ext.log4j, project.ext.websocket, project.ext.oracle,
-            project.ext.servlet, project.ext.httpClient, project.ext.slf4j, project.ext.log4jBinding)
+            project.ext.servlet, project.ext.httpClient, project.ext.slf4j, project.ext.log4jBinding, project.ext.jettyServer)
     compile fileTree (dir: "${project.ext.unmanagedLibDir}", includes: ['*.jar'])
     testCompile(project.ext.hamcrest, project.ext.junit, project.ext.spock)
 }

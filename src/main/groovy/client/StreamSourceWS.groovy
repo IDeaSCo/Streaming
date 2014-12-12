@@ -18,7 +18,7 @@ class StreamSourceWS extends WebSocketClient {
 
     @Override
     void onMessage(String message) {
-        println("Received Message: $message")
+        //println("Received Message: $message")
     }
 
     @Override

@@ -1,8 +1,8 @@
-package client
+package web
 
-import java.nio.channels.NotYetConnectedException
+import client.DataFetcherForOracle
 
-def cli = new CliBuilder(usage:'client -s <serverUrl> -d <databaseUrl> [--dbUser=someUser] [--dbPwd=somePwd] [--dbDriver=someDriver] [--dbName=dbName]')
+def cli = new CliBuilder(usage:'httpclient -s <serverUrl> -d <databaseUrl> [--dbUser=someUser] [--dbPwd=somePwd] [--dbDriver=someDriver] [--dbName=dbName]')
 cli.with {
     s  args:1, argName: 'server',longOpt:'serverUrl','OPTIONAL, Server Url, default is localhost', optionalArg:true
     d  args:1, argName: 'db',longOpt:'dburl','OPTIONAL,DB Url', optionalArg:true
@@ -32,12 +32,12 @@ if(options.t == false && options.d == false) {
     return
 }
 
-def serverUrl = options.s? options.s : 'http://localhost:9080'
+def serverUrl = options.s? options.s : 'http://localhost:9000/data'
 println "Server URL : $serverUrl"
 
 def numberOfClients = options.c ? Integer.parseInt(options.c) : 1
 println("Number of connections to spawn : ${numberOfClients}")
-def uri = new URI(serverUrl)
+def uri = new URL(serverUrl).toURI()
 
 def collationCount = options.n? Integer.parseInt(options.n) :1
 println("Number of records to collate before sending : ${collationCount}")
@@ -59,40 +59,30 @@ def usedMemory(runtime) {
 def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtime, collationCount) {
     def dataFetcher = shouldPushTestData ? new DataFetcherForOracle() : new DataFetcherForOracle(dbConfig, dbName)
     long maxMemoryUsed = usedMemory(runtime)
-    def source = new StreamSourceWS(serverUrl)
+    def source = new HttpsStreamSource(serverUrl)
     println("$senderName Connecting to Server")
-    if (source.connectBlocking()) {
-        println("$senderName Now Connected to Server...Ready to send data")
-    }
-    try {
-        def count = 0
-        def startTime = System.currentTimeMillis()
-        println ("Before fetching memory : ${usedMemory(runtime)}")
-        def collatedData = new StringBuilder()
-        def recordCount = 0;
-        dataFetcher.fetchEachRowOracle { row ->
-            collatedData << row
-            recordCount ++
-            if(recordCount == collationCount) {
-                source.send("Sender: $senderName,Count:$count,  Data: ${collatedData}")
-                collatedData = new StringBuilder()
-                recordCount = 0
-            }
-            count++
-            if(count % 1000 == 0){
-                maxMemoryUsed = Math.max(maxMemoryUsed, usedMemory(runtime));
-            }
-        }
-        def endTime = System.currentTimeMillis()
-        def memory = ['memTotal': toMegabytes(runtime.totalMemory()), 'memUsed': toMegabytes(maxMemoryUsed)]
-        source.send("Total $count Messages delivered to Sink from Sender: $senderName,\n Data: Total data transfer time : ${(endTime - startTime) / 1000} sec,  \nMemory (MB): $memory")
-    } catch (NotYetConnectedException nye) {
-        println(nye.message)
-    } finally {
-        println("$senderName closing Connection with Server...")
-        source.close()
 
+    def count = 0
+    def startTime = System.currentTimeMillis()
+    println ("Before fetching memory : ${usedMemory(runtime)}")
+    def collatedData = new StringBuilder()
+    def recordCount = 0;
+    dataFetcher.fetchEachRowOracle { row ->
+        collatedData << row
+        recordCount ++
+        if(recordCount == collationCount) {
+            source.send([Sender: senderName , Count: count,  Data: collatedData])
+            collatedData = new StringBuilder()
+            recordCount = 0
+        }
+        count++
+        if(count % 1000 == 0){
+            maxMemoryUsed = Math.max(maxMemoryUsed, usedMemory(runtime));
+        }
     }
+    def endTime = System.currentTimeMillis()
+    def memory = ['memTotal': toMegabytes(runtime.totalMemory()), 'memUsed': toMegabytes(maxMemoryUsed)]
+    source.send([TotalMessagesDelivered: count, Sender: senderName,Data: [DataTransferTime : (endTime - startTime) / 1000 ,  Memory: memory]])
 }
 
 
@@ -103,3 +93,4 @@ def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtim
         pushData(sourceClientName, dbConfig, dbName, uri, pushTestData, runtime, collationCount)
     }
 }
+

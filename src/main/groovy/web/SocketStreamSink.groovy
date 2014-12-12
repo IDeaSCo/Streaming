@@ -15,13 +15,13 @@ class SocketStreamSink {
     }
 
     public void start(){
+        println "Listening on port number $sock ..."
         ServerSocket serverSocket = new ServerSocket(sock)
         def count
         while (true) {
             Socket socket = null
             try{
                 socket = serverSocket.accept()
-                socket.setReuseAddress(true)
             }catch(java.net.SocketException e){
                 System.out.println("Socket is closed!");
                 return
@@ -33,7 +33,6 @@ class SocketStreamSink {
                 def line = new String(buffer, "UTF-8");
 
                 if(line.contains("Total")){
-                    println "length = ${line.length()}, count=$count"
                     println line
                 }
 
