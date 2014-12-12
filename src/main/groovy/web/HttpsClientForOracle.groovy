@@ -85,10 +85,12 @@ def pushData(senderName, dbConfig, dbName, serverUrl, shouldPushTestData, runtim
     source.send([TotalMessagesDelivered: count, Sender: senderName,Data: [DataTransferTime : (endTime - startTime) / 1000 ,  Memory: memory]])
 }
 
-
+def source = new HttpsStreamSource(uri)
+source.send([TotalMessagesDelivered: 0, Sender: "Initiator" , Count: "start", NumberOfClients:numberOfClients, Data:"Initiating"])
 
 (1..numberOfClients).each { number ->
     def sourceClientName = "SourceClient#$number"
+
     Thread.start(sourceClientName) {
         pushData(sourceClientName, dbConfig, dbName, uri, pushTestData, runtime, collationCount)
     }
